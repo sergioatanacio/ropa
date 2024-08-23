@@ -1,0 +1,106 @@
+import React, { useState, useEffect } from 'react';
+
+const initialClothes = [
+  { id: 'shirt1', type: 'shirt', color: 'red' },
+  { id: 'shirt2', type: 'shirt', color: 'blue' },
+  { id: 'pants1', type: 'pants', color: 'black' },
+  { id: 'pants2', type: 'pants', color: 'khaki' },
+];
+
+const levels = [
+  { number: 1, goal: 2, message: "¡Organiza 2 prendas para pasar al siguiente nivel!" },
+  { number: 2, goal: 4, message: "¡Bien hecho! Ahora organiza 4 prendas." },
+  { number: 3, goal: 6, message: "¡Nivel avanzado! Organiza 6 prendas." },
+  { number: 4, goal: 8, message: "¡Eres un experto! Organiza 8 prendas para ganar." },
+  { number: 5, goal: Infinity, message: "¡Felicidades! Has completado todos los niveles." }
+];
+
+const ClothesOrganizerSimulator = () => {
+  const [clothes, setClothes] = useState(initialClothes);
+  const [wardrobe, setWardrobe] = useState([]);
+  const [level, setLevel] = useState(0);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    if (score >= levels[level].goal && level < levels.length - 1) {
+      setLevel(level + 1);
+    }
+  }, [score, level]);
+
+  const onDragStart = (e, id) => {
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e, targetList) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text');
+    const item = clothes.find(c => c.id === id) || wardrobe.find(c => c.id === id);
+
+    if (targetList === 'clothes') {
+      setWardrobe(wardrobe.filter(c => c.id !== id));
+      if (!clothes.find(c => c.id === id)) {
+        setClothes([...clothes, item]);
+      }
+      setScore(Math.max(0, score - 1));
+    } else {
+      setClothes(clothes.filter(c => c.id !== id));
+      if (!wardrobe.find(c => c.id === id)) {
+        setWardrobe([...wardrobe, item]);
+        setScore(score + 1);
+      }
+    }
+  };
+
+  const ClothingItem = ({ item }) => (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, item.id)}
+      className="bg-white p-2 mb-2 rounded shadow flex items-center"
+    >
+      <span className="mr-2">{item.type === 'shirt' ? '👕' : '👖'}</span>
+      <span>{item.type} - {item.color}</span>
+    </div>
+  );
+
+  return (
+    <div className="p-4">
+      <div className="mb-4">
+        <h2 className="text-xl font-bold">Nivel: {levels[level].number}</h2>
+        <p>Prendas organizadas: {score}</p>
+        <p>{levels[level].message}</p>
+      </div>
+      <div className="flex justify-around">
+        <div className="w-1/2 mr-4">
+          <h2 className="text-xl font-bold mb-4">Ropa para doblar</h2>
+          <div
+            onDragOver={onDragOver}
+            onDrop={(e) => onDrop(e, 'clothes')}
+            className="min-h-[200px] bg-gray-100 p-4 rounded"
+          >
+            {clothes.map((item) => (
+              <ClothingItem key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+        <div className="w-1/2">
+          <h2 className="text-xl font-bold mb-4">Armario</h2>
+          <div
+            onDragOver={onDragOver}
+            onDrop={(e) => onDrop(e, 'wardrobe')}
+            className="min-h-[200px] bg-gray-200 p-4 rounded border-2 border-dashed border-gray-400"
+          >
+            {wardrobe.map((item) => (
+              <ClothingItem key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ClothesOrganizerSimulator;
